@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <memory>
+#include <chrono>
 
 class NMEAParser
 {
@@ -10,6 +10,8 @@ public:
 	{
 		Success = 0,
 		BadChecksum,
+		InvalidStart,
+		InvalidFormat,
 		None,
 	};
 
@@ -25,13 +27,18 @@ public:
 		None,
 	};
 
-	struct MsgResult
+	struct NmeaResult
 	{
 		Result result;
 		Type type;
 	};
 
-	struct GGAMsg
+	struct NmeaMsg
+	{
+		time_t timestamp;
+	};
+
+	struct GGAMsg : public NmeaMsg
 	{
 		float time;
 		double latitude;
@@ -43,7 +50,7 @@ public:
 			Fix,
 			DiffFix,
 			Unsupported,
-			DeadReckoning,
+			DeadReckoning, // TODO: v2.3 and later
 		} fix_indicator;
 
 		unsigned int satellites_used;
@@ -53,30 +60,28 @@ public:
 		int age_of_diff_data;
 	};
 
+	struct GLLMsg : public NmeaMsg
+	{
+		double latitude;
+		double longitude;
+		float time;
+		bool valid;
+
+		enum class Mode
+		{
+			Autonomous = 0,
+			DGPS,
+			DR,
+		} mode; // TODO: v3.00 and later
+	};
+
 public:
 	NMEAParser();
 	
-	MsgResult ProcessMsg(const std::string& data)
-	{
-		Type type = Type::None;
-		Result res = Result::None;
-
-		std::string type_str = data.substr(1, data.find(',') - 1);
-
-		if (type_str == "GPGGA")
-			type = Type::GGA;
-
-		switch (type)
-		{
-		case Type::GGA:
-			res = ProcessGGA(data);
-			break;
-		}
-
-		return { res, type };
-	}
+	NmeaResult ProcessMsg(const std::string& data);
 
 	inline GGAMsg GetGGA() const { return gga_msg; }
+	inline GLLMsg GetGLL() const { return gll_msg; }
 
 private:
 	struct ChecksumResult
@@ -85,10 +90,16 @@ private:
 		int end_delimeter_idx;
 	};
 
-	ChecksumResult calculateChecksum(const std::string& data);
-	bool isChecksumGood(const std::string& data);
-
 	Result ProcessGGA(const std::string& data);
+	Result ProcessGLL(const std::string& data);
+
+	ChecksumResult calculateChecksum(const std::string& data) const;
+	bool isChecksumGood(const std::string& data) const;
+	std::string getParam(std::istringstream& ss, bool last = false) const;
+
+	float getTime(const std::string& param) const;
+	double getLatLon(const std::string& param, char dir, bool lon) const;
 
 	GGAMsg gga_msg;
+	GLLMsg gll_msg;
 };
