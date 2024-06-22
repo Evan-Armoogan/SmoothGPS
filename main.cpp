@@ -10,8 +10,8 @@ int main()
 	const std::string gga_data = "$GPGGA,002153.000,3342.6618,N,11751.3858,W,1,10,1.2,27.0,M,-34.2,M,20,0000*5C";
 	const std::string gll_data = "$GPGLL,3723.2475,N,12158.3416,W,161229.487,A,A*41";
 	const std::string gsa_data = "$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33";
-	NMEAParser parser;
 
+	NMEAParser parser;
 	auto msg = parser.ProcessMsg(gsa_data);
 
 	std::cout << static_cast<int>(msg.result) << std::endl;

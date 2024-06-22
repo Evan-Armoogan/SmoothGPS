@@ -23,6 +23,8 @@ NMEAParser::NmeaResult NMEAParser::ProcessMsg(const std::string& data)
 		type = Type::GLL;
 	else if (type_str == "GPGSA")
 		type = Type::GSA;
+	else
+		return { Result::InvalidType, Type::None };
 
 	if (!isChecksumGood(data))
 		return { Result::BadChecksum, type };

@@ -11,6 +11,7 @@ public:
 		Success = 0,
 		BadChecksum,
 		InvalidStart,
+		InvalidType,
 		InvalidFormat,
 		None,
 	};
