@@ -75,6 +75,39 @@ public:
 		} mode; // TODO: v3.00 and later
 	};
 
+	struct GSAMsg : public NmeaMsg
+	{
+		enum class Mode1
+		{
+			Manual = 0,
+			Automatic,
+		} mode1;
+
+		enum class Mode2
+		{
+			FixUnavailable = 0,
+			Fix2D,
+			Fix3D,
+		} mode2;
+
+		int SatCh1;
+		int SatCh2;
+		int SatCh3;
+		int SatCh4;
+		int SatCh5;
+		int SatCh6;
+		int SatCh7;
+		int SatCh8;
+		int SatCh9;
+		int SatCh10;
+		int SatCh11;
+		int SatCh12;
+
+		float pdop;
+		float hdop;
+		float vdop;
+	};
+
 public:
 	NMEAParser();
 	
@@ -82,6 +115,7 @@ public:
 
 	inline GGAMsg GetGGA() const { return gga_msg; }
 	inline GLLMsg GetGLL() const { return gll_msg; }
+	inline GSAMsg GetGSA() const { return gsa_msg; }
 
 private:
 	struct ChecksumResult
@@ -92,6 +126,7 @@ private:
 
 	Result ProcessGGA(const std::string& data);
 	Result ProcessGLL(const std::string& data);
+	Result ProcessGSA(const std::string& data);
 
 	ChecksumResult calculateChecksum(const std::string& data) const;
 	bool isChecksumGood(const std::string& data) const;
@@ -100,6 +135,7 @@ private:
 	float getTime(const std::string& param) const;
 	double getLatLon(const std::string& param, char dir, bool lon) const;
 
-	GGAMsg gga_msg;
-	GLLMsg gll_msg;
+	GGAMsg gga_msg = {};
+	GLLMsg gll_msg = {};
+	GSAMsg gsa_msg = {};
 };

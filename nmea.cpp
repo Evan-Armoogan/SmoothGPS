@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cstdint>
 
-NMEAParser::NMEAParser() : gga_msg({}), gll_msg({})
+NMEAParser::NMEAParser()
 {
 }
 
@@ -21,6 +21,8 @@ NMEAParser::NmeaResult NMEAParser::ProcessMsg(const std::string& data)
 		type = Type::GGA;
 	else if (type_str == "GPGLL")
 		type = Type::GLL;
+	else if (type_str == "GPGSA")
+		type = Type::GSA;
 
 	if (!isChecksumGood(data))
 		return { Result::BadChecksum, type };
@@ -39,6 +41,10 @@ NMEAParser::NmeaResult NMEAParser::ProcessMsg(const std::string& data)
 		case Type::GLL:
 			res = ProcessGLL(data);
 			msg = &gll_msg;
+			break;
+		case Type::GSA:
+			res = ProcessGSA(data);
+			msg = &gsa_msg;
 			break;
 		}
 	}
@@ -232,5 +238,84 @@ NMEAParser::Result NMEAParser::ProcessGLL(const std::string& data)
 		return Result::InvalidFormat;
 
 	gll_msg = msg;
+	return Result::Success;
+}
+
+NMEAParser::Result NMEAParser::ProcessGSA(const std::string& data)
+{
+	std::istringstream stream(data);
+	std::string param;
+	std::string direction;
+
+	/**
+	* Create a temporary structure here and copy it to the class member
+	* at the end once we've verified the message is in the valid NMEA
+	* format.
+	*/
+	GSAMsg msg;
+
+	// discard first param as it indicates the msg type, already been parsed
+	getParam(stream);
+
+	param = getParam(stream); // gets Mode 1
+	msg.mode1 = param == "M" ? GSAMsg::Mode1::Manual : GSAMsg::Mode1::Automatic;
+
+	param = getParam(stream); // gets Mode 2
+	if (param == "1")
+		msg.mode2 = GSAMsg::Mode2::FixUnavailable;
+	else if (param == "2")
+		msg.mode2 = GSAMsg::Mode2::Fix2D;
+	else
+		msg.mode2 = GSAMsg::Mode2::Fix3D;
+
+	param = getParam(stream); // gets Satelite Used Channel 1
+	msg.SatCh1 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 2
+	msg.SatCh2 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 3
+	msg.SatCh3 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 4
+	msg.SatCh4 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 5
+	msg.SatCh5 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 6
+	msg.SatCh6 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 7
+	msg.SatCh7 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 8
+	msg.SatCh8 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 9
+	msg.SatCh9 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 10
+	msg.SatCh10 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 11
+	msg.SatCh11 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets Satelite Used Channel 12
+	msg.SatCh12 = param == "" ? -1 : std::stoi(param);
+
+	param = getParam(stream); // gets PDOP
+	msg.pdop = std::stof(param);
+
+	param = getParam(stream); // gets HDOP
+	msg.hdop = std::stof(param);
+
+	param = getParam(stream, true); // gets VDOP
+	if (param != "InvalidNmeaFormat")
+		msg.vdop = std::stof(param);
+	else
+		return Result::InvalidFormat;
+
+	gsa_msg = msg;
 	return Result::Success;
 }
