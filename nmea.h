@@ -28,6 +28,16 @@ public:
 		None,
 	};
 
+	enum class Constellation
+	{
+		GPS = 0,
+		GLONASS,
+		BeiDou,
+		Galileo,
+		QZSS,
+		None,
+	};
+
 	struct NmeaResult
 	{
 		Result result;
@@ -37,6 +47,7 @@ public:
 	struct NmeaMsg
 	{
 		time_t timestamp;
+		Constellation constellation;
 	};
 
 	struct GGAMsg : public NmeaMsg
@@ -107,6 +118,16 @@ public:
 		float pdop;
 		float hdop;
 		float vdop;
+	};
+
+	struct GSVMsg : public NmeaMsg
+	{
+		unsigned int num_messages;
+		unsigned int message_num;
+		unsigned int satellites_in_view;
+		unsigned int satellite_id;
+
+
 	};
 
 public:

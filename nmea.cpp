@@ -3,6 +3,8 @@
 #include <sstream>
 #include <cstdint>
 
+#define MSG_TYPE_INDEX 2
+
 NMEAParser::NMEAParser()
 {
 }
@@ -17,14 +19,31 @@ NMEAParser::NmeaResult NMEAParser::ProcessMsg(const std::string& data)
 
 	std::string type_str = data.substr(1, data.find(',') - 1);
 
-	if (type_str == "GPGGA")
+	std::string constellation_type = type_str.substr(0, MSG_TYPE_INDEX);
+	std::string msg_type = type_str.substr(MSG_TYPE_INDEX, type_str.length() - MSG_TYPE_INDEX);
+
+	if (msg_type == "GPGGA")
 		type = Type::GGA;
-	else if (type_str == "GPGLL")
+	else if (msg_type == "GPGLL")
 		type = Type::GLL;
-	else if (type_str == "GPGSA")
+	else if (msg_type == "GPGSA")
 		type = Type::GSA;
 	else
 		return { Result::InvalidType, Type::None };
+
+	Constellation constellation;
+	if (constellation_type == "GP")
+		constellation = Constellation::GPS;
+	else if (constellation_type == "GL")
+		constellation = Constellation::GLONASS;
+	else if (constellation_type == "GB")
+		constellation = Constellation::BeiDou;
+	else if (constellation_type == "GA")
+		constellation = Constellation::Galileo;
+	else if (constellation_type == "GQ")
+		constellation = Constellation::QZSS;
+	else
+		constellation = Constellation::None;
 
 	if (!isChecksumGood(data))
 		return { Result::BadChecksum, type };
@@ -59,6 +78,7 @@ NMEAParser::NmeaResult NMEAParser::ProcessMsg(const std::string& data)
 	{
 		using namespace std::chrono;
 		msg->timestamp = system_clock::to_time_t(system_clock::now());
+		msg->constellation = constellation;
 	}
 
 	return { res, type };
